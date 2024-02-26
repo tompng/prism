@@ -34,7 +34,7 @@ big_add(bigint_t left, bigint_t right, uint64_t base) {
  * Result is assumed to be positive value. Internal use for karatsuba_multiply.
  */
 static bigint_t
-bigint_sub2(bigint_t a, bigint_t b, bigint_t c, uint64_t base) {
+big_sub2(bigint_t a, bigint_t b, bigint_t c, uint64_t base) {
     size_t length = a.length;
     uint32_t *values = (uint32_t*) malloc(sizeof(uint32_t) * length);
     int64_t carry = 0;
@@ -44,7 +44,7 @@ bigint_sub2(bigint_t a, bigint_t b, bigint_t c, uint64_t base) {
             values[i] = (uint32_t) sub;
             carry = 0;
         } else {
-            sub += 2 * base;
+            sub +=  2 * (int64_t) base;
             values[i] = (uint32_t) ((uint64_t) sub % base);
             carry = sub / (int64_t) base - 2;
         }
@@ -109,7 +109,7 @@ karatsuba_multiply(bigint_t left, bigint_t right, uint64_t base) {
     bigint_t x01 = big_add(x0, x1, base);
     bigint_t y01 = big_add(y0, y1, base);
     bigint_t xy = karatsuba_multiply(x01, y01, base);
-    bigint_t z1 = bigint_sub2(xy, z0, z2, base);
+    bigint_t z1 = big_sub2(xy, z0, z2, base);
 
     size_t length = left.length + right.length;
     uint32_t *values = (uint32_t*) calloc(length, sizeof(uint32_t));
@@ -225,7 +225,7 @@ karatsuba_convert_base(bigint_t source, uint64_t base_from, uint64_t base_to) {
 static bigint_t
 big_parse_powof2(uint32_t base, const uint8_t *digits, size_t digits_length) {
     size_t bit = 1;
-    while (base > (1 << bit)) bit++;
+    while (base > (uint32_t) (1 << bit)) bit++;
     size_t length = (digits_length * bit + 31) / 32;
     uint32_t *values = (uint32_t*) calloc(length, sizeof(uint32_t));
     for (size_t i = 0; i < digits_length; i++) {
@@ -289,6 +289,7 @@ pm_integer_parse_big(pm_integer_t *integer, uint32_t multiplier, const uint8_t *
         current->next = malloc(sizeof(pm_integer_word_t));
         current = current->next;
         current->value = bigint.values[i];
+        current->next = NULL;
     }
 
     free(bigint.values);
